@@ -1,0 +1,142 @@
+[
+  {
+    "id": "dev-001",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Total.cs",
+    "diff": "--- a/src/Orders/Total.cs\n+++ b/src/Orders/Total.cs\n@@ -1 +1 @@\n-var amount = price * quantity; return amount;\n+var total = price * quantity; return total;\n",
+    "context": "price is decimal, quantity is int. These are the entire statements in this pure method."
+  },
+  {
+    "id": "dev-002",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Tax.cs",
+    "diff": "--- a/src/Orders/Tax.cs\n+++ b/src/Orders/Tax.cs\n@@ -1 +1 @@\n-return subtotal * 0.1m;\n+return Tax(subtotal); // helper: static decimal Tax(decimal value) => value * 0.1m;\n",
+    "context": "The new private static helper shown in the added line is pure; subtotal is decimal. No other changes."
+  },
+  {
+    "id": "dev-003",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Users/Status.cs",
+    "diff": "--- a/src/Users/Status.cs\n+++ b/src/Users/Status.cs\n@@ -1 +1 @@\n-if (active) return 1; return 0;\n+if (!active) return 0; return 1;\n",
+    "context": "active is an already evaluated bool parameter; method has no side effects."
+  },
+  {
+    "id": "dev-004",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Stock/Count.cs",
+    "diff": "--- a/src/Stock/Count.cs\n+++ b/src/Stock/Count.cs\n@@ -1 +1 @@\n-var result = count + 1; return result;\n+return count + 1;\n",
+    "context": "count and return value are int, unchecked arithmetic in both versions; local result has no other usages."
+  },
+  {
+    "id": "dev-005",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Shipping/Zone.cs",
+    "diff": "--- a/src/Shipping/Zone.cs\n+++ b/src/Shipping/Zone.cs\n@@ -1 +1 @@\n-return domestic ? \"local\" : \"overseas\";\n+if (domestic) return \"local\"; return \"overseas\";\n",
+    "context": "domestic is a bool parameter; no other statements or side effects."
+  },
+  {
+    "id": "dev-006",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Quantity.cs",
+    "diff": "--- a/src/Orders/Quantity.cs\n+++ b/src/Orders/Quantity.cs\n@@ -1 +1 @@\n-return quantity > 10;\n+return quantity >= 10;\n",
+    "context": "quantity is int; 10 is a permitted input. Return value controls bulk discount eligibility."
+  },
+  {
+    "id": "dev-007",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Fallback.cs",
+    "diff": "--- a/src/Orders/Fallback.cs\n+++ b/src/Orders/Fallback.cs\n@@ -1 +1 @@\n-return name ?? \"guest\";\n+return name ?? \"anonymous\";\n",
+    "context": "name is a nullable string; the method returns a displayed account name."
+  },
+  {
+    "id": "dev-008",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Discount.cs",
+    "diff": "--- a/src/Orders/Discount.cs\n+++ b/src/Orders/Discount.cs\n@@ -1 +1 @@\n-return decimal.Round(total * rate, 2, MidpointRounding.ToEven);\n+return decimal.Round(total * rate, 2, MidpointRounding.AwayFromZero);\n",
+    "context": "total and rate are decimal and may yield .005 midpoints. This return value is charged to the customer."
+  },
+  {
+    "id": "dev-009",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Authorization/Guard.cs",
+    "diff": "--- a/src/Authorization/Guard.cs\n+++ b/src/Authorization/Guard.cs\n@@ -1 +1 @@\n-if (!user.IsAdmin) throw new UnauthorizedAccessException(); Save();\n+Save();\n",
+    "context": "Save changes shared settings. IsAdmin is bool. Non-admin callers can invoke this method."
+  },
+  {
+    "id": "dev-010",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Failure.cs",
+    "diff": "--- a/src/Orders/Failure.cs\n+++ b/src/Orders/Failure.cs\n@@ -1 +1 @@\n-throw new InvalidOperationException();\n+throw new ArgumentException();\n",
+    "context": "A caller catches InvalidOperationException and turns it into a retry; ArgumentException propagates."
+  },
+  {
+    "id": "dev-011",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Authorization/Update.cs",
+    "diff": "--- a/src/Authorization/Update.cs\n+++ b/src/Authorization/Update.cs\n@@ -1 +1 @@\n-var result = input; if (!user.IsAdmin) throw new UnauthorizedAccessException(); Save(result);\n+var normalized = input; Save(normalized);\n",
+    "context": "The variable rename is consistent. Save has the same implementation. Non-admin callers previously failed before Save."
+  },
+  {
+    "id": "dev-012",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Rate.cs",
+    "diff": "--- a/src/Orders/Rate.cs\n+++ b/src/Orders/Rate.cs\n@@ -1 +1 @@\n-var fee = subtotal * 0.1m; return fee;\n+return Fee(subtotal); // new helper: static decimal Fee(decimal x) => x * 0.2m;\n",
+    "context": "subtotal is decimal. A private pure helper is introduced and the charged fee rate doubles."
+  },
+  {
+    "id": "dev-013",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Shipping/Dispatch.cs",
+    "diff": "--- a/src/Shipping/Dispatch.cs\n+++ b/src/Shipping/Dispatch.cs\n@@ -1 +1 @@\n-var destination = address; if (ready) { Log(destination); Send(destination); }\n+var target = address; if (ready) { Send(target); }\n",
+    "context": "Log writes a required audit entry; Send sends a parcel. The local rename is consistent; ready is bool."
+  },
+  {
+    "id": "dev-014",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Users/Eligibility.cs",
+    "diff": "--- a/src/Users/Eligibility.cs\n+++ b/src/Users/Eligibility.cs\n@@ -1 +1 @@\n-var allowed = member; return allowed ? 1 : 0;\n+var eligible = member; return eligible ? 1 : -1;\n",
+    "context": "member is bool, return type is int. Variable renamed consistently, denied return value also changes."
+  },
+  {
+    "id": "dev-015",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Stock/Limits.cs",
+    "diff": "--- a/src/Stock/Limits.cs\n+++ b/src/Stock/Limits.cs\n@@ -1 +1 @@\n-var maximum = 100; if (quantity > maximum) Reject();\n+var limit = 200; if (quantity > limit) Reject();\n",
+    "context": "quantity is int, Reject throws. Variable is consistently renamed and configured capacity doubles."
+  },
+  {
+    "id": "dev-016",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Validate.cs",
+    "diff": "--- a/src/Orders/Validate.cs\n+++ b/src/Orders/Validate.cs\n@@ -1 +1 @@\n-return LegacyValidate(order);\n+return NewValidate(order);\n",
+    "context": "Neither validation method implementation or equivalence contract is supplied."
+  },
+  {
+    "id": "dev-017",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Query.cs",
+    "diff": "--- a/src/Orders/Query.cs\n+++ b/src/Orders/Query.cs\n@@ -1 +1 @@\n-return query.FilterOld();\n+return query.FilterNew();\n",
+    "context": "query is provider-backed IQueryable<Order>. Custom extension implementations and provider translation are absent."
+  },
+  {
+    "id": "dev-018",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Users/Sort.cs",
+    "diff": "--- a/src/Users/Sort.cs\n+++ b/src/Users/Sort.cs\n@@ -1 +1 @@\n-users.Sort(oldComparer);\n+users.Sort(newComparer);\n",
+    "context": "Comparer implementations, null ordering and equality behavior are not provided."
+  },
+  {
+    "id": "dev-019",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Shipping/Timeout.cs",
+    "diff": "--- a/src/Shipping/Timeout.cs\n+++ b/src/Shipping/Timeout.cs\n@@ -1 +1 @@\n-client.SetTimeout(oldValue);\n+client.ConfigureTimeout(newValue);\n",
+    "context": "Value definitions and timeout units/overload contracts are absent."
+  },
+  {
+    "id": "dev-020",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Serialize.cs",
+    "diff": "--- a/src/Orders/Serialize.cs\n+++ b/src/Orders/Serialize.cs\n@@ -1 +1 @@\n-return JsonSerializer.Serialize(order, oldOptions);\n+return JsonSerializer.Serialize(order, newOptions);\n",
+    "context": "Neither options object nor consumer assumptions are available."
+  }
+]

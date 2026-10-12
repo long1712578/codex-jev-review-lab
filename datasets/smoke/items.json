@@ -1,0 +1,30 @@
+[
+  {
+    "id": "dev-001",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Total.cs",
+    "diff": "--- a/src/Orders/Total.cs\n+++ b/src/Orders/Total.cs\n@@ -1 +1 @@\n-var amount = price * quantity; return amount;\n+var total = price * quantity; return total;\n",
+    "context": "price is decimal, quantity is int. These are the entire statements in this pure method."
+  },
+  {
+    "id": "dev-006",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Quantity.cs",
+    "diff": "--- a/src/Orders/Quantity.cs\n+++ b/src/Orders/Quantity.cs\n@@ -1 +1 @@\n-return quantity > 10;\n+return quantity >= 10;\n",
+    "context": "quantity is int; 10 is a permitted input. Return value controls bulk discount eligibility."
+  },
+  {
+    "id": "dev-011",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Authorization/Update.cs",
+    "diff": "--- a/src/Authorization/Update.cs\n+++ b/src/Authorization/Update.cs\n@@ -1 +1 @@\n-var result = input; if (!user.IsAdmin) throw new UnauthorizedAccessException(); Save(result);\n+var normalized = input; Save(normalized);\n",
+    "context": "The variable rename is consistent. Save has the same implementation. Non-admin callers previously failed before Save."
+  },
+  {
+    "id": "dev-016",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Orders/Validate.cs",
+    "diff": "--- a/src/Orders/Validate.cs\n+++ b/src/Orders/Validate.cs\n@@ -1 +1 @@\n-return LegacyValidate(order);\n+return NewValidate(order);\n",
+    "context": "Neither validation method implementation or equivalence contract is supplied."
+  }
+]

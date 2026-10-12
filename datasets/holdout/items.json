@@ -1,0 +1,142 @@
+[
+  {
+    "id": "holdout-001",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Billing/Deferred.cs",
+    "diff": "--- a/src/Billing/Deferred.cs\n+++ b/src/Billing/Deferred.cs\n@@ -1 +1 @@\n-return invoices.Where(IsOverdue);\n+return invoices.Where(IsOverdue).ToList();\n",
+    "context": "Return contract is IEnumerable<Invoice>. Caller can mutate invoice state after this method returns and before enumeration. IsOverdue reads that state."
+  },
+  {
+    "id": "holdout-002",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Billing/Currency.cs",
+    "diff": "--- a/src/Billing/Currency.cs\n+++ b/src/Billing/Currency.cs\n@@ -1 +1 @@\n-return value.ToString(\"F2\", CultureInfo.InvariantCulture);\n+return value.ToString(\"F2\");\n",
+    "context": "value is decimal; returned text is consumed by an invariant-culture export. CurrentCulture can be fr-FR."
+  },
+  {
+    "id": "holdout-003",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Catalog/Allocation.cs",
+    "diff": "--- a/src/Catalog/Allocation.cs\n+++ b/src/Catalog/Allocation.cs\n@@ -1 +1 @@\n-var values = new int[] { 1, 2, 3 }; return values.Length;\n+ReadOnlySpan<int> values = [1, 2, 3]; return values.Length;\n",
+    "context": "This is the complete pure method; int return value is its only observable output. Allocation characteristics are outside the business contract."
+  },
+  {
+    "id": "holdout-004",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Billing/Retries.cs",
+    "diff": "--- a/src/Billing/Retries.cs\n+++ b/src/Billing/Retries.cs\n@@ -1 +1 @@\n-await SendAsync();\n+await retryPolicy.ExecuteAsync(SendAsync);\n",
+    "context": "SendAsync and retryPolicy implementations, idempotency guarantees and exception policies are absent."
+  },
+  {
+    "id": "holdout-005",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Catalog/Lookup.cs",
+    "diff": "--- a/src/Catalog/Lookup.cs\n+++ b/src/Catalog/Lookup.cs\n@@ -1 +1 @@\n-return items.Single(x => x.Id == id);\n+return items.First(x => x.Id == id);\n",
+    "context": "items is a List<Item>. Duplicate IDs are possible; the previous API reports duplicates by throwing."
+  },
+  {
+    "id": "holdout-006",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Reports/Lifetime.cs",
+    "diff": "--- a/src/Reports/Lifetime.cs\n+++ b/src/Reports/Lifetime.cs\n@@ -1 +1 @@\n-using var stream = Open(); return Read(stream);\n+var data = ReadAndClose(); return data;\n",
+    "context": "Open, Read and the new ReadAndClose implementations are not provided, including disposal on exceptions."
+  },
+  {
+    "id": "holdout-007",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Payments/Locking.cs",
+    "diff": "--- a/src/Payments/Locking.cs\n+++ b/src/Payments/Locking.cs\n@@ -1 +1 @@\n-lock (gate) { balance -= amount; }\n+balance -= amount;\n",
+    "context": "balance is mutable decimal shared by concurrent callers, gate is shared; amount comes from validated input."
+  },
+  {
+    "id": "holdout-008",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Catalog/Pattern.cs",
+    "diff": "--- a/src/Catalog/Pattern.cs\n+++ b/src/Catalog/Pattern.cs\n@@ -1 +1 @@\n-switch (code) { case 1: return \"A\"; case 2: return \"B\"; default: return \"?\"; }\n+return code switch { 1 => \"A\", 2 => \"B\", _ => \"?\" };\n",
+    "context": "code is an int parameter. These are the entire method statements and both methods return string with no side effects."
+  },
+  {
+    "id": "holdout-009",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Payments/Atomic.cs",
+    "diff": "--- a/src/Payments/Atomic.cs\n+++ b/src/Payments/Atomic.cs\n@@ -1 +1 @@\n-BeginTransaction(); Debit(); Credit(); Commit();\n+Transfer();\n",
+    "context": "Transfer implementation and transaction behavior are absent; Debit and Credit can fail independently."
+  },
+  {
+    "id": "holdout-010",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Reports/Flush.cs",
+    "diff": "--- a/src/Reports/Flush.cs\n+++ b/src/Reports/Flush.cs\n@@ -1 +1 @@\n-writer.Write(text); writer.Flush();\n+writer.Write(text);\n",
+    "context": "writer is a buffered external TextWriter; consumers may read immediately before disposal."
+  },
+  {
+    "id": "holdout-011",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Catalog/Range.cs",
+    "diff": "--- a/src/Catalog/Range.cs\n+++ b/src/Catalog/Range.cs\n@@ -1 +1 @@\n-var count = values.Length; for (var i = 0; i < count; i++) Visit(values[i]);\n+foreach (var value in values) Visit(value);\n",
+    "context": "values is an immutable-size int[] parameter. Visit has no reference to the array and cannot alter it. Iteration order is part of the contract."
+  },
+  {
+    "id": "holdout-012",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Payments/Checked.cs",
+    "diff": "--- a/src/Payments/Checked.cs\n+++ b/src/Payments/Checked.cs\n@@ -1 +1 @@\n-return balance + adjustment;\n+return checked(balance + adjustment);\n",
+    "context": "balance and adjustment are int. This method previously used unchecked overflow; full int range is allowed."
+  },
+  {
+    "id": "holdout-013",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Reports/Await.cs",
+    "diff": "--- a/src/Reports/Await.cs\n+++ b/src/Reports/Await.cs\n@@ -1 +1 @@\n-return await GetReportAsync();\n+return GetReportAsync().Result;\n",
+    "context": "Method signature also changes from async Task<string> to string. Full caller context and synchronization environment are not supplied."
+  },
+  {
+    "id": "holdout-014",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Catalog/Initializer.cs",
+    "diff": "--- a/src/Catalog/Initializer.cs\n+++ b/src/Catalog/Initializer.cs\n@@ -1 +1 @@\n-var item = new Item(); item.Price = 5; return item;\n+return new Item { Price = 5 };\n",
+    "context": "Item has a pure parameterless constructor, public auto-property int Price with no overridden behavior. These are the full statements."
+  },
+  {
+    "id": "holdout-015",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Payments/Cancel.cs",
+    "diff": "--- a/src/Payments/Cancel.cs\n+++ b/src/Payments/Cancel.cs\n@@ -1 +1 @@\n-var result = await ChargeAsync(token); return result;\n+return await ProcessChargeAsync(CancellationToken.None); // helper: Task<bool> ProcessChargeAsync(CancellationToken t) => ChargeAsync(t);\n",
+    "context": "A helper is introduced, while cancellation is separately disabled. ChargeAsync honors its cancellation token."
+  },
+  {
+    "id": "holdout-016",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Reports/Archive.cs",
+    "diff": "--- a/src/Reports/Archive.cs\n+++ b/src/Reports/Archive.cs\n@@ -1 +1 @@\n-var stream = CreateArchive(); Save(stream);\n+SaveArchive(); // helper: void SaveArchive() { using var stream = CreateArchive(); Save(stream); }\n",
+    "context": "Helper extraction is visible, but CreateArchive and Save contracts are absent. It is unknown whether Save retains ownership of stream."
+  },
+  {
+    "id": "holdout-017",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Catalog/Delegate.cs",
+    "diff": "--- a/src/Catalog/Delegate.cs\n+++ b/src/Catalog/Delegate.cs\n@@ -1 +1 @@\n-return records.Select(x => Normalize(x)).ToArray();\n+return records.Select(Normalize).ToArray();\n",
+    "context": "records is int[], Normalize is exactly one static pure overload int Normalize(int x). No overload, expression-tree conversion or captured state."
+  },
+  {
+    "id": "holdout-018",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Payments/Journal.cs",
+    "diff": "--- a/src/Payments/Journal.cs\n+++ b/src/Payments/Journal.cs\n@@ -1 +1 @@\n-Audit(); CommitCharge();\n+Commit(); // helper: void Commit() { CommitCharge(); Audit(); }\n",
+    "context": "Helper extraction preserves both operations but changes their order. Audit may throw and CommitCharge irreversibly writes a charge."
+  },
+  {
+    "id": "holdout-019",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Reports/Encoding.cs",
+    "diff": "--- a/src/Reports/Encoding.cs\n+++ b/src/Reports/Encoding.cs\n@@ -1 +1 @@\n-var bytes = Encoding.UTF8.GetBytes(text); return bytes;\n+return Encode(text); // helper: byte[] Encode(string s) => Encoding.ASCII.GetBytes(s);\n",
+    "context": "A helper is extracted and encoding changes. text may contain Vietnamese characters; returned bytes are sent to clients."
+  },
+  {
+    "id": "holdout-020",
+    "task": "Refactor without changing observable business behavior.",
+    "path": "src/Payments/Event.cs",
+    "diff": "--- a/src/Payments/Event.cs\n+++ b/src/Payments/Event.cs\n@@ -1 +1 @@\n-var handlers = Changed; handlers?.Invoke(this, EventArgs.Empty);\n+NotifyChanged(); // helper: void NotifyChanged() { Changed?.Invoke(this, EventArgs.Empty); counter++; }\n",
+    "context": "Event notification is extracted and counter increment added. counter is exposed through a public Count property, handlers can read it."
+  }
+]

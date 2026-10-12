@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/jev-review/verdict.v1.schema.json",
+  "title": "Jev Review verdict v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "path", "inputHash", "rubricHash", "configHash", "status", "prediction", "flagged", "reasons", "errorCode", "attempts", "latencyMilliseconds", "reused"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "path": { "type": "string" },
+    "inputHash": { "$ref": "#/$defs/hash" },
+    "rubricHash": { "$ref": "#/$defs/hash" },
+    "configHash": { "$ref": "#/$defs/hash" },
+    "status": { "enum": ["classified", "unjudged", "excluded"] },
+    "prediction": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/prediction" }] },
+    "flagged": { "type": "boolean" },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "errorCode": { "type": ["string", "null"] },
+    "attempts": { "type": "integer", "minimum": 0, "maximum": 6 },
+    "latencyMilliseconds": { "type": "number", "minimum": 0 },
+    "reused": { "type": "boolean" }
+  },
+  "allOf": [
+    { "if": { "properties": { "status": { "const": "classified" } } }, "then": { "properties": { "prediction": { "$ref": "#/$defs/prediction" }, "errorCode": { "type": "null" } } }, "else": { "properties": { "prediction": { "type": "null" }, "flagged": { "const": true }, "errorCode": { "type": "string" } } } }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "probability": { "type": "number", "minimum": 0, "maximum": 1 },
+    "prediction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "probabilities", "confidence", "model", "inputTokens", "outputTokens"],
+      "properties": {
+        "label": { "enum": ["refactor_only", "behavior_change", "mixed", "insufficient_context"] },
+        "model": { "type": "string", "minLength": 1 },
+        "confidence": { "$ref": "#/$defs/probability" },
+        "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "probabilities": {
+          "type": "object", "additionalProperties": false,
+          "required": ["refactor_only", "behavior_change", "mixed", "insufficient_context"],
+          "properties": { "refactor_only": { "$ref": "#/$defs/probability" }, "behavior_change": { "$ref": "#/$defs/probability" }, "mixed": { "$ref": "#/$defs/probability" }, "insufficient_context": { "$ref": "#/$defs/probability" } }
+        }
+      }
+    }
+  }
+}

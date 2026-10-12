@@ -1,0 +1,15 @@
+{
+  "dev-001": {
+    "label": "refactor_only",
+    "transientFailures": 2
+  },
+  "dev-006": {
+    "error": "http_401"
+  },
+  "dev-011": {
+    "error": "invalid_response"
+  },
+  "dev-016": {
+    "label": "insufficient_context"
+  }
+}

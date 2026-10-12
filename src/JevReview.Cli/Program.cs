@@ -1,0 +1,5 @@
+using JevReview;
+
+using var cancellation = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancellation.Cancel(); };
+return await CliApplication.RunAsync(args, Console.Out, cancellation.Token);

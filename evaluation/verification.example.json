@@ -1,0 +1,18 @@
+[
+  {
+    "id": "dev-006",
+    "status": "confirmed",
+    "summary": "Quantity 10 becomes eligible for the bulk discount.",
+    "findingLabel": "behavior_change",
+    "evidence": [
+      { "path": "src/Orders/Quantity.cs", "line": 1, "description": "The fixture diff changes quantity > 10 to quantity >= 10; context permits quantity 10." }
+    ]
+  },
+  {
+    "id": "dev-016",
+    "status": "unresolved",
+    "summary": "LegacyValidate and NewValidate implementations are absent from the fixture.",
+    "findingLabel": null,
+    "evidence": []
+  }
+]

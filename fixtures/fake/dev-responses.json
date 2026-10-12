@@ -1,0 +1,82 @@
+{
+  "dev-001": {
+    "label": "refactor_only",
+    "confidence": 0.95
+  },
+  "dev-002": {
+    "label": "refactor_only",
+    "confidence": 0.95
+  },
+  "dev-003": {
+    "label": "refactor_only",
+    "confidence": 0.95
+  },
+  "dev-004": {
+    "label": "refactor_only",
+    "confidence": 0.95
+  },
+  "dev-005": {
+    "label": "refactor_only",
+    "confidence": 0.95
+  },
+  "dev-006": {
+    "label": "behavior_change",
+    "confidence": 0.95
+  },
+  "dev-007": {
+    "label": "behavior_change",
+    "confidence": 0.95
+  },
+  "dev-008": {
+    "label": "behavior_change",
+    "confidence": 0.95
+  },
+  "dev-009": {
+    "label": "behavior_change",
+    "confidence": 0.95
+  },
+  "dev-010": {
+    "label": "behavior_change",
+    "confidence": 0.95
+  },
+  "dev-011": {
+    "label": "mixed",
+    "confidence": 0.95
+  },
+  "dev-012": {
+    "label": "mixed",
+    "confidence": 0.95
+  },
+  "dev-013": {
+    "label": "mixed",
+    "confidence": 0.95
+  },
+  "dev-014": {
+    "label": "mixed",
+    "confidence": 0.95
+  },
+  "dev-015": {
+    "label": "mixed",
+    "confidence": 0.95
+  },
+  "dev-016": {
+    "label": "insufficient_context",
+    "confidence": 0.95
+  },
+  "dev-017": {
+    "label": "insufficient_context",
+    "confidence": 0.95
+  },
+  "dev-018": {
+    "label": "insufficient_context",
+    "confidence": 0.95
+  },
+  "dev-019": {
+    "label": "insufficient_context",
+    "confidence": 0.95
+  },
+  "dev-020": {
+    "label": "insufficient_context",
+    "confidence": 0.95
+  }
+}
