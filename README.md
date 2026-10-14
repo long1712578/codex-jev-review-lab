@@ -4,6 +4,8 @@ Lab .NET để review PR được mô tả là refactor: CLI thu thập diff, Je
 
 Đã có CLI fake/live, policy, retry/timeout/cancellation, resume, evaluator, Git collector, MCP stdio và skill `jev-triage`. **Fake chỉ kiểm tra pipeline.** Smoke Jev thật và benchmark A/B thật còn cần API key, baseline và gold độc lập.
 
+Review để chuẩn bị dùng trong cộng đồng (14/10/2026): [findings và kiểm chứng](docs/community-review-2026-10-14.md), [thiết kế/roadmap đề xuất](docs/superpowers/specs/2026-10-14-community-distribution-design.md), [setup trong project riêng](docs/installation.md), [lợi ích và so sánh](docs/comparison.md), [TypeSafe System One cho .NET — một file đầy đủ](docs/TypeSafe-SystemOne.md), [đóng góp](CONTRIBUTING.md). Kiến trúc mới và .NET tool package chưa triển khai; findings review còn cần sửa trước phát hành.
+
 ## Cài đặt và demo
 
 Yêu cầu .NET SDK **10.0.303** hoặc patch mới hơn cùng feature band `10.0.3xx`, Git; PowerShell nếu dùng `.ps1`. `global.json` pin SDK, ứng dụng dùng .NET 10. Chạy từ gốc repo:

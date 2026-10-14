@@ -1,4 +1,3 @@
-using JevReview;
 using Xunit;
 
 namespace JevReview.Tests;
@@ -9,18 +8,18 @@ public sealed class CommandTests
     public async Task ClassifyProducesFiveArtifactsAndOnlySummaryOnStdout()
     {
         using var temp = new TempDirectory();
-        var data = System.IO.Path.Combine(temp.Path, "items.json");
-        var rubric = System.IO.Path.Combine(temp.Path, "rubric.json");
-        var output = System.IO.Path.Combine(temp.Path, "run");
+        var data = Path.Combine(temp.Path, "items.json");
+        var rubric = Path.Combine(temp.Path, "rubric.json");
+        var output = Path.Combine(temp.Path, "run");
         await JsonFiles.WriteAsync(data, new[] { CoreTests.Item(diff: "secret-diff") });
         await JsonFiles.WriteAsync(rubric, CoreTests.Rubric);
         using var writer = new StringWriter();
         var exit = await CliApplication.RunAsync(["classify", "--dataset", data, "--rubric", rubric, "--output", output], writer, default);
         Assert.Equal(0, exit);
         Assert.DoesNotContain("secret-diff", writer.ToString());
-        Assert.Equal("classified", JsonFiles.ReadLines<Verdict>(System.IO.Path.Combine(output, "verdicts.jsonl"))[0].Status);
+        Assert.Equal("classified", JsonFiles.ReadLines<Verdict>(Path.Combine(output, "verdicts.jsonl"))[0].Status);
         foreach (var file in new[] { "manifest.json", "verdicts.jsonl", "flagged.json", "errors.jsonl", "report.md" })
-            Assert.True(File.Exists(System.IO.Path.Combine(output, file)));
+            Assert.True(File.Exists(Path.Combine(output, file)));
     }
 
     [Theory]
@@ -39,7 +38,7 @@ public sealed class CommandTests
     public async Task DoctorDoesNotEchoCredentialValue()
     {
         using var temp = new TempDirectory();
-        var rubric = System.IO.Path.Combine(temp.Path, "rubric.json");
+        var rubric = Path.Combine(temp.Path, "rubric.json");
         await JsonFiles.WriteAsync(rubric, CoreTests.Rubric);
         using var writer = new StringWriter();
         var exit = await CliApplication.RunAsync(["doctor", "--rubric", rubric], writer, default);
@@ -96,7 +95,7 @@ public sealed class CommandTests
     public async Task DoctorValidatesRubricAndModeWithoutLiveCall()
     {
         using var temp = new TempDirectory();
-        var path = System.IO.Path.Combine(temp.Path, "invalid-rubric.json");
+        var path = Path.Combine(temp.Path, "invalid-rubric.json");
         await File.WriteAllTextAsync(path, "{}");
         using var output = new StringWriter();
         Assert.Equal(2, await CliApplication.RunAsync(["doctor", "--rubric", path], output, default));
@@ -108,19 +107,19 @@ public sealed class CommandTests
     {
         using var inference = new TempDirectory();
         using var evaluator = new TempDirectory();
-        var runFolder = System.IO.Path.Combine(inference.Path, "run");
+        var runFolder = Path.Combine(inference.Path, "run");
         await new ReviewRunner(new FakeJudgeClient(new())).RunAsync([CoreTests.Item("toy")], CoreTests.Rubric, new(), runFolder, default);
-        var goldPath = System.IO.Path.Combine(evaluator.Path, "toy-gold.json");
+        var goldPath = Path.Combine(evaluator.Path, "toy-gold.json");
         await JsonFiles.WriteAsync(goldPath, new[] { new GoldLabel("toy", "behavior_change", true, "Synthetic evaluator contract test, not model-quality measurement") });
         using var output = new StringWriter();
-        var evalPath = System.IO.Path.Combine(evaluator.Path, "metrics");
+        var evalPath = Path.Combine(evaluator.Path, "metrics");
         var exit = await CliApplication.RunAsync(["evaluate", "--run", runFolder, "--gold", goldPath, "--output", evalPath, "--inference-root", inference.Path], output, default);
         Assert.Equal(0, exit);
-        using var metrics = System.Text.Json.JsonDocument.Parse(File.ReadAllText(System.IO.Path.Combine(evalPath, "metrics.json")));
+        using var metrics = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(evalPath, "metrics.json")));
         Assert.Equal(1, metrics.RootElement.GetProperty("pipeline").GetProperty("total").GetInt32());
         Assert.Equal(System.Text.Json.JsonValueKind.Null, metrics.RootElement.GetProperty("baseline").ValueKind);
-        Assert.Contains("N/A", File.ReadAllText(System.IO.Path.Combine(evalPath, "evaluation.md")));
-        var insideGold = System.IO.Path.Combine(inference.Path, "gold.json");
+        Assert.Contains("N/A", File.ReadAllText(Path.Combine(evalPath, "evaluation.md")));
+        var insideGold = Path.Combine(inference.Path, "gold.json");
         await JsonFiles.WriteAsync(insideGold, new[] { new GoldLabel("toy", "behavior_change", true, "test") });
         Assert.Equal(2, await CliApplication.RunAsync(["evaluate", "--run", runFolder, "--gold", insideGold, "--output", evalPath, "--inference-root", inference.Path], output, default));
     }
