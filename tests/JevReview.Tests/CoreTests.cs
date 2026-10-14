@@ -1,4 +1,3 @@
-using JevReview;
 using Xunit;
 
 namespace JevReview.Tests;
@@ -7,8 +6,10 @@ public sealed class CoreTests
 {
     public static readonly ReviewRubric Rubric = new("test-v1", "Review behavior", new()
     {
-        ["refactor_only"] = "Structure only", ["behavior_change"] = "Behavior",
-        ["mixed"] = "Both", ["insufficient_context"] = "Missing context"
+        ["refactor_only"] = "Structure only",
+        ["behavior_change"] = "Behavior",
+        ["mixed"] = "Both",
+        ["insufficient_context"] = "Missing context"
     });
 
     public static ReviewItem Item(string id = "a", string path = "src/A.cs", string diff = "-x\n+y") =>
@@ -72,8 +73,16 @@ public sealed class CoreTests
     public static string Response(string id, string label, double probability) => System.Text.Json.JsonSerializer.Serialize(new
     {
         model = "jev-1.13.0",
-        answers = new Dictionary<string, object> { [id] = new { type = "choice", choice = label,
-            probabilities = Rubric.Labels.Keys.ToDictionary(x => x, x => x == "refactor_only" ? probability : Math.Round((1 - probability) / 3, 8)), confidence = .99 } },
+        answers = new Dictionary<string, object>
+        {
+            [id] = new
+            {
+                type = "choice",
+                choice = label,
+                probabilities = Rubric.Labels.Keys.ToDictionary(x => x, x => x == "refactor_only" ? probability : Math.Round((1 - probability) / 3, 8)),
+                confidence = .99
+            }
+        },
         usage = new { input_tokens = 50, output_tokens = 5 }
     });
 }

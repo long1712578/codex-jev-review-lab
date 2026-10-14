@@ -1,7 +1,7 @@
-using System.Globalization;
 using System.Text.Json;
 
 namespace JevReview;
+
 public static class CliApplication
 {
     public static async Task<int> RunAsync(string[] args, TextWriter output, CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ public static class CliApplication
                         using var http = ReviewService.CreateHttpClient();
                         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                         timeout.CancelAfter(TimeSpan.FromSeconds(30));
-                        var client = new JevJudgeClient(http, ReviewService.RequireApiKey(), new() { Mode = "live", Model = options.Get("model", "jev-latest") });
+                        var client = new JevJudgeClient(http, CliEnvironment.RequireApiKey(), new() { Mode = "live", Model = options.Get("model", "jev-latest") });
                         var result = await client.JudgeAsync(new("smoke", "Check a local variable rename", "Smoke.cs", "-var x = 1;\n+var y = 1;", "Only the local identifier is renamed; no subsequent usages."), rubric, timeout.Token);
                         await output.WriteLineAsync($"live smoke: valid response, actual model {result.Model}, label {result.Label}.");
                     }
@@ -44,7 +44,9 @@ public static class CliApplication
                     return options.Get("mode", "fake") == "live" && !hasKey ? 2 : 0;
                 case "classify":
                     options.Allow("dataset", "rubric", "mode", "model", "output", "fake-responses", "policy", "resume", "concurrency", "timeout-seconds", "max-retries", "max-input-bytes", "git", "base", "head", "merge-base", "task");
-                    var run = await ReviewService.StartAsync(options, cancellationToken);
+                    var request = CliReviewRequestParser.Parse(options);
+                    var run = await ReviewService.StartAsync(request, cancellationToken,
+                        request.Options.Mode == "live" ? CliEnvironment.RequireApiKey() : null);
                     await output.WriteLineAsync(JsonFiles.Serialize(new { runId = run.Manifest.RunId, output = run.OutputDirectory, counts = run.Manifest.Counts, models = run.Manifest.ActualModels }));
                     return cancellationToken.IsCancellationRequested ? 130 : run.Manifest.Counts.FailedOrUnjudged + run.Manifest.Counts.ExcludedWithReason > 0 ? 1 : 0;
                 case "inspect":
@@ -78,31 +80,4 @@ public static class CliApplication
             return 2;
         }
     }
-}
-
-public sealed class CommandOptions
-{
-    private readonly Dictionary<string, string> values = new(StringComparer.Ordinal);
-    public static CommandOptions Parse(string[] args)
-    {
-        var result = new CommandOptions();
-        for (var i = 0; i < args.Length; i++)
-        {
-            if (!args[i].StartsWith("--", StringComparison.Ordinal)) throw new ArgumentException("expected_named_option");
-            var key = args[i][2..];
-            var value = key is "check-live" or "merge-base" or "allow-live" ? "true" : ++i < args.Length ? args[i] : throw new ArgumentException("missing_option_value");
-            if (!result.values.TryAdd(key, value)) throw new ArgumentException("duplicate_option");
-        }
-        return result;
-    }
-    public void Allow(params string[] names)
-    {
-        if (values.Keys.Any(x => !names.Contains(x))) throw new ArgumentException("unknown_option");
-    }
-    public bool Has(string name) => values.ContainsKey(name);
-    public string? Optional(string name) => values.GetValueOrDefault(name);
-    public string Get(string name, string fallback) => Optional(name) ?? fallback;
-    public string Require(string name) => Optional(name) ?? throw new ArgumentException("missing_required_option");
-    public int Integer(string name, int fallback) => int.TryParse(Get(name, fallback.ToString(CultureInfo.InvariantCulture)), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
-        ? value : throw new ArgumentException("invalid_integer_option");
 }

@@ -2,7 +2,19 @@
 
 Lab .NET để review PR được mô tả là refactor: CLI thu thập diff, Jev phân loại, policy chọn item cần đọc sâu, Codex xác minh và lưu báo cáo. Triển khai theo [kế hoạch gốc](codex-jev-review-lab-plan.md).
 
-Đã có CLI fake/live, policy, retry/timeout/cancellation, resume, evaluator, Git collector, MCP stdio và skill `jev-triage`. **Fake chỉ kiểm tra pipeline.** Smoke Jev thật và benchmark A/B thật còn cần API key, baseline và gold độc lập.
+Đã có review core dùng chung, CLI fake/live, policy, retry/timeout/cancellation, resume, evaluator, Git collector, MCP stdio và các skill Codex. **Fake chỉ kiểm tra pipeline.** Smoke Jev thật và benchmark A/B thật còn cần API key, baseline và gold độc lập.
+
+Review ban đầu (14/10/2026): [findings và kiểm chứng](docs/community-review-2026-10-14.md), [roadmap cộng đồng](docs/superpowers/specs/2026-10-14-community-distribution-design.md), [setup bằng DLL](docs/installation.md), [lợi ích và so sánh](docs/comparison.md), [TypeSafe System One cho .NET](docs/TypeSafe-SystemOne.md), [đóng góp](CONTRIBUTING.md). R1–R4 đã được xử lý trong v1; terminal cache/persistence và .NET tool package còn trong backlog.
+
+## V1 cho project công ty
+
+[Quickstart cài đặt và sử dụng](docs/codex-v1-quickstart.md), [release notes](docs/codex-v1-release-notes.md), [kiến trúc và nguồn tham khảo](docs/architecture.md), [plan triển khai](docs/superpowers/plans/2026-10-14-codex-jev-v1.md).
+
+```powershell
+pwsh -NoProfile -File scripts/New-CodexRelease.ps1
+```
+
+Gói ZIP dưới `runs/releases/1.0.0` có runtime, bốn skill `$ultrathink`, `$orchestrate`, `$workflowz`, `$jevify`, config và installer theo project. Installer hỗ trợ `-WhatIf` và từ chối overwrite. Gọi skill tường minh; bản này không chèn chỉ dẫn ẩn hoặc tự đổi reasoning effort. Core .NET 10 đã tách khỏi CLI/MCP; artifact JSON và commands hiện có được giữ tương thích. Chưa publish NuGet hoặc chạy live benchmark.
 
 ## Cài đặt và demo
 

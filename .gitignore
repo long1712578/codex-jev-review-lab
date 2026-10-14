@@ -5,4 +5,5 @@ runs/
 .superpowers/
 .env
 *.user
+.vs/
 evaluation/private/

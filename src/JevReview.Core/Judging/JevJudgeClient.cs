@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 
 namespace JevReview;
+
 public sealed class JevJudgeClient(HttpClient http, string apiKey, RunOptions options) : IJudgeClient
 {
     public async Task<JudgeResult> JudgeAsync(ReviewItem item, ReviewRubric rubric, CancellationToken cancellationToken)

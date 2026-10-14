@@ -30,5 +30,5 @@ public static class RunReporter
         return report.ToString();
     }
 
-    internal static string Escape(string text) => text.Replace("|", "\\|").Replace("\r", " ").Replace("\n", " ").Replace("<", "&lt;").Replace(">", "&gt;");
+    public static string Escape(string text) => text.Replace("|", "\\|").Replace("\r", " ").Replace("\n", " ").Replace("<", "&lt;").Replace(">", "&gt;");
 }

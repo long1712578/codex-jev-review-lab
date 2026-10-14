@@ -1,4 +1,5 @@
 namespace JevReview;
+
 public static class VerificationReporter
 {
     public static void Validate(Verification[] verification, Verdict[] verdicts)
@@ -9,7 +10,7 @@ public static class VerificationReporter
             string.IsNullOrWhiteSpace(x.Summary) || x.Evidence == null ||
             (x.Status != "unresolved" && x.Evidence.Length == 0) ||
             x.Evidence.Any(e => e == null || string.IsNullOrWhiteSpace(e.Path) || e.Line < 1 || string.IsNullOrWhiteSpace(e.Description)) ||
-            (x.Status == "confirmed" && (x.FindingLabel == null || !Evaluator.Labels.Contains(x.FindingLabel)))))
+            (x.Status == "confirmed" && (x.FindingLabel == null || !ReviewLabels.All.Contains(x.FindingLabel)))))
             throw new ArgumentException("verification_requires_known_ids_status_and_evidence");
     }
 

@@ -1,7 +1,8 @@
 namespace JevReview;
+
 public static class Evaluator
 {
-    public static readonly string[] Labels = ["refactor_only", "behavior_change", "mixed", "insufficient_context"];
+    public static IReadOnlyList<string> Labels => ReviewLabels.All;
 
     public static EvaluationMetrics Compute(GoldLabel[] gold, Verdict[] verdicts)
     {
@@ -69,9 +70,15 @@ public static class EvaluationReporter
         Directory.CreateDirectory(outputDirectory);
         await JsonFiles.WriteAsync(Path.Combine(outputDirectory, "metrics.json"), new
         {
-            runId = manifest.RunId, mode = manifest.Configuration.Mode, manifest.InputHash, manifest.RubricHash,
-            goldHash = JsonFiles.Hash(File.ReadAllText(fullGold)), pipeline, baseline,
-            cost = (double?)null, codexVerificationMilliseconds = (double?)null,
+            runId = manifest.RunId,
+            mode = manifest.Configuration.Mode,
+            manifest.InputHash,
+            manifest.RubricHash,
+            goldHash = JsonFiles.Hash(File.ReadAllText(fullGold)),
+            pipeline,
+            baseline,
+            cost = (double?)null,
+            codexVerificationMilliseconds = (double?)null,
             caveat = "Fake runs test plumbing only. Escalation metrics do not measure final finding correctness. Latency includes item retries/backoff; costs and Codex usage are N/A. Gold path placement alone is not a blind evaluation boundary; use the documented isolated container."
         });
         string Number(double? value) => value?.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) ?? "N/A";

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 
 namespace JevReview;
+
 public sealed class ReviewRunner(IJudgeClient client)
 {
     public async Task<ReviewRun> RunAsync(ReviewItem[] items, ReviewRubric rubric, RunOptions options,

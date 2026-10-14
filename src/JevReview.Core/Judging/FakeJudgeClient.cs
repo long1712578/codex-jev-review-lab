@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 
 namespace JevReview;
+
 public sealed class FakeJudgeClient(Dictionary<string, FakeAnswer> answers) : IJudgeClient
 {
     private readonly ConcurrentDictionary<string, int> calls = new();
