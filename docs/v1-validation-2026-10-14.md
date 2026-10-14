@@ -43,3 +43,4 @@ Fix: publisher enumerates exactly eight intended SKILL.md/openai.yaml leaf files
 ## Delivery
 
 The local ZIP is created with `New-CodexRelease.ps1 -SkipChecks` after the complete equivalent Release checks above. Its release.json records source commit, dirty-state flag and bundled file hashes; the sibling .sha256 identifies the ZIP. No automatic merge, push, remote release, NuGet publication or license selection is performed. See [company quickstart](codex-v1-quickstart.md).
+Final archive source commit: 2c6d8a4892f0a1faa6aeb50d54982c5cc865aa27; sourceDirty false; 24 bundled files. ZIP SHA-256: 2dba147b4438a25e9449a89860dc433d8e32eeb37dca584d9f4ef06b452c0c4a. Smoke on that published runtime: counts 4/4/0/0/3. This source commit precedes the documentation-only completion record.
