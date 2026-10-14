@@ -19,7 +19,7 @@ Các chức năng OMX và CodeGraph trong bảng dựa trên README chính thứ
 - **Khả năng truy lại:** manifest lưu input/rubric/config hashes, actual model và Git SHAs/semantics; không suy luận lại từ mutable branch khi verify.
 - **Offline để đóng góp:** tests/fake fixtures kiểm tra pipeline không cần credentials; production API lỗi không biến thành pass.
 
-Đây là lợi ích thiết kế, không phải tuyên bố các công cụ khác không có khả năng tương tự. Repo hiện còn [release blockers](community-review-2026-10-14.md), chưa phải sản phẩm đã hoàn thiện.
+Đây là lợi ích thiết kế, không phải tuyên bố các công cụ khác không có khả năng tương tự. V1 đã xử lý R1–R4 của [review ban đầu](community-review-2026-10-14.md) và có ZIP/installer cho pilot nội bộ; các giới hạn còn lại được ghi trong [release notes](codex-v1-release-notes.md).
 
 ## Giá trị cần đo
 

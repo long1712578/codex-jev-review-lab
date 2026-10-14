@@ -1,201 +1,312 @@
-# Codex + Jev Review Lab
+# Codex + Jev
 
-Lab .NET để review PR được mô tả là refactor: CLI thu thập diff, Jev phân loại, policy chọn item cần đọc sâu, Codex xác minh và lưu báo cáo. Triển khai theo [kế hoạch gốc](codex-jev-review-lab-plan.md).
+Bộ skill và công cụ review refactor dành cho các team đang dùng Codex. Cài vào Git repo của bạn để điều tra thay đổi khó, điều phối công việc, thực hiện kế hoạch theo từng bước và review diff với báo cáo có bằng chứng.
 
-Đã có review core dùng chung, CLI fake/live, policy, retry/timeout/cancellation, resume, evaluator, Git collector, MCP stdio và các skill Codex. **Fake chỉ kiểm tra pipeline.** Smoke Jev thật và benchmark A/B thật còn cần API key, baseline và gold độc lập.
+**V1.0.0 · Gói ZIP nội bộ · Skill theo project + CLI/MCP · .NET 10**
 
-Review ban đầu (14/10/2026): [findings và kiểm chứng](docs/community-review-2026-10-14.md), [roadmap cộng đồng](docs/superpowers/specs/2026-10-14-community-distribution-design.md), [setup bằng DLL](docs/installation.md), [lợi ích và so sánh](docs/comparison.md), [TypeSafe System One cho .NET](docs/TypeSafe-SystemOne.md), [đóng góp](CONTRIBUTING.md). R1–R4 đã được xử lý trong v1; terminal cache/persistence và .NET tool package còn trong backlog.
+[Lợi ích](#benefits) · [Cài đặt](#install) · [Sử dụng](#usage) · [Live mode](#live) · [Khắc phục lỗi](#troubleshooting) · [Build từ source](#development)
 
-## V1 cho project công ty
+<a id="benefits"></a>
 
-[Quickstart cài đặt và sử dụng](docs/codex-v1-quickstart.md), [release notes](docs/codex-v1-release-notes.md), [kiến trúc và nguồn tham khảo](docs/architecture.md), [plan triển khai](docs/superpowers/plans/2026-10-14-codex-jev-v1.md).
+## Vì sao dùng trong project của bạn?
+
+| Nhu cầu của team | Khả năng hiện có | Lợi ích khi áp dụng |
+| --- | --- | --- |
+| Những task khó cần điều tra trước khi sửa | `$ultrathink` kiểm tra source, caller, failure modes và phương án sửa | Giúp quyết định dựa trên bằng chứng và giữ phạm vi sửa phù hợp |
+| Nhiều phần việc độc lập | `$orchestrate` phân công ownership, tổng hợp kết quả và kiểm tra tích hợp | Giúp chia việc rõ ràng và phát hiện kết quả mâu thuẫn giữa các phần |
+| Migration/refactor gồm nhiều bước phụ thuộc | `$workflowz` ghi mục tiêu, tiến độ, đầu ra và checks của từng phase | Giúp team tiếp tục công việc từ trạng thái đã ghi và biết phần nào còn chưa hoàn tất |
+| PR được mô tả là “chỉ refactor” | `$jevify` thu committed diff, phân loại theo rubric/policy, rồi xác minh các item flagged | Giúp tập trung review vào thay đổi rủi ro hoặc thiếu context theo tiêu chí thống nhất |
+| Cần bàn giao và truy lại kết quả review | Manifest lưu SHAs, hashes, config/model; report tách prediction khỏi verification | Giúp reviewer biết đã review revision nào, kết luận nào có evidence và phần nào còn bỏ ngỏ |
+
+CLI và MCP dùng cùng review core; bạn có thể chạy lệnh trong terminal hoặc để Codex gọi tool theo cùng quy trình. Demo offline giúp kiểm tra bộ cài và artifacts mà không cần TypeSafe API key.
+
+Ví dụ: team đổi tên và tách logic ở nhiều file, nhưng một diff vô tình đổi điều kiện authorization. Policy có thể đưa path nhạy cảm vào danh sách cần đọc; reviewer tiếp tục kiểm tra implementation, caller và tests, rồi ghi finding với path/dòng/bằng chứng. Prediction `refactor_only` vẫn cần được đối chiếu theo quy trình của team.
+
+Phù hợp khi team cần review refactor theo tiêu chí cố định và lưu lịch sử review. Với vài file nhỏ, review trực tiếp có thể đơn giản hơn. **Chưa có live benchmark chứng minh tiết kiệm thời gian, chi phí hoặc cải thiện độ chính xác.** Xem [lợi ích và cách đo](docs/comparison.md).
+
+<a id="install"></a>
+
+## Cài vào project của bạn
+
+### Chuẩn bị
+
+| Thành phần | Khi nào cần |
+| --- | --- |
+| Codex chạy local, hỗ trợ repo skills | Dùng bốn skill; hỗ trợ MCP nếu muốn gọi review tools trong Codex |
+| [.NET 10 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) | Chạy CLI/MCP từ ZIP; không cần SDK để dùng gói đã build |
+| [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell) (`pwsh`) | Chạy installer và các ví dụ bên dưới |
+| [Git](https://git-scm.com/downloads/) và một Git repo có sẵn | Installer cần đường dẫn đúng Git root; review Git cần commits |
+
+Mở **PowerShell 7**. Kiểm tra các công cụ có trong PATH:
 
 ```powershell
-pwsh -NoProfile -File scripts/New-CodexRelease.ps1
+pwsh --version
+git --version
+dotnet --list-runtimes
 ```
 
-Gói ZIP dưới `runs/releases/1.0.0` có runtime, bốn skill `$ultrathink`, `$orchestrate`, `$workflowz`, `$jevify`, config và installer theo project. Installer hỗ trợ `-WhatIf` và từ chối overwrite. Gọi skill tường minh; bản này không chèn chỉ dẫn ẩn hoặc tự đổi reasoning effort. Core .NET 10 đã tách khỏi CLI/MCP; artifact JSON và commands hiện có được giữ tương thích. Chưa publish NuGet hoặc chạy live benchmark.
+Danh sách runtimes cần có `Microsoft.NETCore.App 10.0.x`. Project được review có thể dùng C#, JavaScript, Java hoặc ngôn ngữ khác; không cần nâng runtime của ứng dụng lên .NET 10.
 
-## Cài đặt và demo
+### 1. Nhận gói ZIP và kiểm tra checksum
 
-Yêu cầu .NET SDK **10.0.303** hoặc patch mới hơn cùng feature band `10.0.3xx`, Git; PowerShell nếu dùng `.ps1`. `global.json` pin SDK, ứng dụng dùng .NET 10. Chạy từ gốc repo:
+Nhận `codex-jev-1.0.0.zip` và `codex-jev-1.0.0.zip.sha256` từ maintainer/kênh nội bộ tin cậy. V1 hiện phát hành bằng ZIP; nếu bạn có source v1, xem [cách tạo gói](#development).
+
+Thay **hai đường dẫn** đầu tiên bằng vị trí thật trên máy. `$jevProject` phải là Git root của project đích; dùng `git -C 'D:/Projects/MyApp' rev-parse --show-toplevel` để kiểm tra. Chạy các bước cài đặt trong cùng một cửa sổ PowerShell:
+
+```powershell
+$jevZip = 'D:/Downloads/codex-jev-1.0.0.zip'
+$jevProject = 'D:/Projects/MyApp'
+$jevPackage = Join-Path ([IO.Path]::GetTempPath()) ('codex-jev-' + [Guid]::NewGuid().ToString('N'))
+
+$jevExpectedHash = ((Get-Content -LiteralPath ($jevZip + '.sha256') -Raw).Trim() -split '\s+')[0]
+$jevActualHash = (Get-FileHash -LiteralPath $jevZip -Algorithm SHA256).Hash
+if ($jevActualHash -ine $jevExpectedHash) { throw 'ZIP checksum mismatch; obtain the package again.' }
+
+Expand-Archive -LiteralPath $jevZip -DestinationPath $jevPackage
+```
+
+Checksum giúp kiểm tra tính toàn vẹn; nguồn cung cấp gói xác định người phát hành. ZIP chứa `scripts/`, `runtime/`, `.agents/` và `release.json` ngay tại thư mục giải nén.
+
+### 2. Cài vào Git root
+
+Xem trước thao tác cài đặt, rồi chạy installer:
+
+```powershell
+pwsh -NoProfile -File (Join-Path $jevPackage 'scripts/Install-CodexJev.ps1') -ProjectPath $jevProject -WhatIf
+pwsh -NoProfile -File (Join-Path $jevPackage 'scripts/Install-CodexJev.ps1') -ProjectPath $jevProject
+if ($LASTEXITCODE -ne 0) { throw 'Installation failed; resolve the reported error before continuing.' }
+
+Set-Location -LiteralPath $jevProject
+```
+
+Installer kiểm tra package hashes, Git root, linked paths và collisions trước khi ghi. Nếu đã có `.jev-review` hoặc một skill cùng tên, hãy xử lý theo [hướng dẫn cập nhật](#maintenance). Installer giữ nguyên `AGENTS.md`, `.gitignore` và config Codex của team.
+
+Files chính sau khi cài:
+
+```text
+MyApp/
+├── .agents/skills/
+│   ├── ultrathink/
+│   ├── orchestrate/
+│   ├── workflowz/
+│   └── jevify/
+└── .jev-review/
+    ├── runtime/                  # CLI, Core DLL và runtime metadata
+    ├── rubric.json               # Tiêu chí phân loại
+    ├── policy.json               # Quy tắc chọn item cần review
+    ├── fake-responses.json       # Responses mẫu cho demo offline
+    ├── smoke/items.json          # Bốn item demo
+    ├── codex-mcp.toml            # Snippet MCP theo đường dẫn máy này
+    ├── release.json
+    ├── installation.json         # Danh sách files đã cài
+    └── docs/
+```
+
+Giữ toàn bộ files trong `runtime/`; CLI cần cả Core DLL, `.deps.json` và `.runtimeconfig.json`.
+
+### 3. Kết nối MCP với Codex
+
+Từ Git root của project, xem snippet đã tạo:
+
+```powershell
+Get-Content -LiteralPath .jev-review/codex-mcp.toml
+```
+
+Tạo `.codex/config.toml` nếu chưa có, rồi thêm table từ snippet vào file này. Nếu config đã có nội dung, merge table `[mcp_servers.jev_review]` và giữ các settings khác; tránh khai báo cùng table hai lần. Snippet chứa absolute paths của máy bạn, chẳng hạn:
+
+```toml
+[mcp_servers.jev_review]
+command = "dotnet"
+args = ["D:/Projects/MyApp/.jev-review/runtime/jev-review.dll", "mcp", "--workspace", "D:/Projects/MyApp"]
+cwd = "D:/Projects/MyApp"
+```
+
+Dùng snippet do installer tạo để có paths chính xác. Codex chỉ đọc project config trong repo được tin cậy; áp dụng trust theo chính sách công ty rồi mở lại phiên Codex tại project. Xem [config Codex](https://learn.chatgpt.com/docs/config-file/config-basic) và [MCP chính thức](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+Trong Codex CLI, kiểm tra `/skills` có bốn skill và `/mcp` có `jev_review`. Nếu đã cài Codex CLI, từ Git root có thể dùng:
+
+```powershell
+codex mcp list
+```
+
+MCP cung cấp `start_review`, `get_review_status`, `get_review_result`. Khi gọi `start_review` trực tiếp, truyền `rubric`, `policy`, `fakeResponses` trỏ vào `.jev-review/`; defaults của tool vẫn là paths của lab. Skill `$jevify` hướng dẫn dùng các assets đã cài. CLI vẫn chạy được độc lập nếu bạn chưa kết nối MCP.
+
+### 4. Chạy demo offline
+
+Vẫn chạy từ Git root của **project đích**:
+
+```powershell
+dotnet .jev-review/runtime/jev-review.dll doctor --rubric .jev-review/rubric.json
+dotnet .jev-review/runtime/jev-review.dll classify --dataset .jev-review/smoke --rubric .jev-review/rubric.json --policy .jev-review/policy.json --fake-responses .jev-review/fake-responses.json --mode fake
+```
+
+Lệnh cuối in JSON chứa `runId`, `output`, `counts`, `models`. Output được tạo trong `runs/<timestamp>-<id>`, nên có thể chạy lại mà không cần đổi tên thư mục thủ công.
+
+Kết quả demo dự kiến:
+
+```json
+{
+  "total": 4,
+  "classified": 4,
+  "failedOrUnjudged": 0,
+  "excludedWithReason": 0,
+  "flagged": 3
+}
+```
+
+Mở `report.md` trong thư mục `output` để xem báo cáo. **Fake dùng responses định trước, chỉ kiểm tra pipeline; không suy luận code hoặc chứng minh chất lượng Jev.** Demo không gọi TypeSafe API; việc dùng Codex vẫn theo tài khoản/client hiện có của bạn.
+
+<a id="usage"></a>
+
+## Dùng trong công việc hằng ngày
+
+### Chọn skill theo mục tiêu
+
+Gọi tường minh bằng `$tên-skill` trong prompt Codex. Bốn skill đặt `allow_implicit_invocation: false`. Cơ chế discovery/invocation theo [tài liệu skills Codex](https://learn.chatgpt.com/docs/build-skills).
+
+| Skill | Khi nên dùng | Ví dụ prompt |
+| --- | --- | --- |
+| `$ultrathink` | Bug khó, quyết định kỹ thuật chưa rõ failure modes | `$ultrathink điều tra vì sao API từ chối đơn hàng rỗng; đề xuất, sửa và kiểm chứng phương án nhỏ nhất.` |
+| `$orchestrate` | Các phần việc độc lập đủ lớn để chia ownership | `$orchestrate review riêng module API và persistence, tổng hợp findings có evidence và kiểm tra tích hợp.` |
+| `$workflowz` | Migration/refactor có plan và nhiều bước phụ thuộc | `$workflowz thực hiện migration theo docs/plan.md, ghi tiến độ từng phase và chỉ hoàn tất sau checks.` |
+| `$jevify` | Triage committed diff rồi xác minh item flagged | `$jevify review main...feature/refactor với config trong .jev-review; mục tiêu giữ business behavior. Dùng fake để kiểm tra setup, rồi xác minh flagged items và báo coverage.` |
+
+Thay tên branch, module và file plan bằng nội dung tồn tại trong project. `ultrathink` dùng model hiện tại; `orchestrate`/`workflowz` chỉ chạy subagents khi host có tools và cho phép, nếu không thì thực hiện tuần tự.
+
+### Review một Git range bằng CLI
+
+Ví dụ dưới dùng cùng assets đã cài. Thay `main` và `feature/refactor` bằng refs hoặc commit SHAs thực tế:
+
+```powershell
+$jevBase = 'main'
+$jevHead = 'feature/refactor'
+$jevReviewArgs = @(
+    '--git', '.', '--base', $jevBase, '--head', $jevHead, '--merge-base',
+    '--task', 'Refactor without changing business behavior',
+    '--rubric', '.jev-review/rubric.json',
+    '--policy', '.jev-review/policy.json'
+)
+dotnet .jev-review/runtime/jev-review.dll classify @jevReviewArgs --fake-responses .jev-review/fake-responses.json --mode fake
+```
+
+`--merge-base` lấy diff từ điểm phân nhánh chung đến head; bỏ flag nếu cần diff trực tiếp hai commits. Manifest ghi resolved SHAs và semantics. **Chỉ committed changes nằm trong phạm vi**; staged, unstaged và untracked changes không được thu thập.
+
+Fake trên Git ID mới trả `insufficient_context` và yêu cầu reviewer đọc tiếp. Muốn phân loại bằng Jev thật, dùng [live mode](#live). Team chốt rubric/policy trước khi classify; đổi tiêu chí hoặc input thì tạo run mới.
+
+### Đọc kết quả và ghi bằng chứng
+
+Đọc summary, `flagged.json` và `errors.jsonl` trước, rồi lấy source/caller/tests của item cần xác minh.
+
+| Artifact | Dùng để làm gì |
+| --- | --- |
+| `manifest.json` | Đối chiếu counts, SHAs, hashes, config và actual models |
+| `flagged.json` / `errors.jsonl` | Chọn item cần review và nhận biết item lỗi |
+| `verdicts.jsonl` | Xem prediction và terminal status của từng item |
+| `report.md` | Chia sẻ kết quả, verification và phần chưa review |
+| `verification.json` | Lưu evidence của reviewer sau lệnh `verify` |
+
+Luôn giữ `total = classified + failedOrUnjudged + excludedWithReason`. `flagged` chồng lấp các trạng thái, không cộng thêm vào total. Prediction `refactor_only` và exit code 0 không chứng minh PR an toàn.
+
+Lấy output path từ summary và một ID từ `flagged.json`, rồi inspect:
+
+```powershell
+$jevRun = 'runs/THAY-BANG-RUN-THUC-TE'
+$jevFlagged = Get-Content -LiteralPath (Join-Path $jevRun 'flagged.json') -Raw | ConvertFrom-Json
+$jevItemId = $jevFlagged[0].id
+dotnet .jev-review/runtime/jev-review.dll inspect --run $jevRun --id $jevItemId
+```
+
+Chỉ dùng ví dụ inspect khi danh sách flagged có item. Sau khi xác minh, cung cấp JSON array records qua `verify --run <run> --file <records.json>`. Confirmed/rejected cần evidence gồm path, line và description; confirmed còn cần `findingLabel`. `verify` thay toàn bộ records của run, nên hãy gộp records cũ trước khi cập nhật. Có thể nhờ `$jevify` thực hiện bước này; xem [format và ví dụ verification](docs/codex-v1-quickstart.md#6-review-git-và-ghi-evidence).
+
+Exit codes: **0** = classification hoàn tất; **1** = còn unjudged/excluded; **2** = input/config lỗi; **130** = hủy. Kiểm tra coverage và evidence trước khi quyết định với PR.
+
+<a id="live"></a>
+
+## Bật Jev thật khi team sẵn sàng
+
+Live classify gửi diff/context tới TypeSafe và có thể phát sinh chi phí. Chỉ dùng dữ liệu công ty cho phép gửi. Chuẩn bị Git scope/`$jevReviewArgs` như ví dụ ở trên **trước khi nhập key**. Nhập key kín trong host được phép:
+
+```powershell
+$jevSecureKey = Read-Host 'TypeSafe API key' -AsSecureString
+try {
+    $env:TYPESAFE_API_KEY = [System.Net.NetworkCredential]::new('', $jevSecureKey).Password
+    dotnet .jev-review/runtime/jev-review.dll doctor --mode live --rubric .jev-review/rubric.json
+    if ($LASTEXITCODE -ne 0) { throw 'Live prerequisites are missing.' }
+    dotnet .jev-review/runtime/jev-review.dll classify @jevReviewArgs --mode live --model jev-latest
+}
+finally {
+    Remove-Item Env:TYPESAFE_API_KEY -ErrorAction SilentlyContinue
+}
+```
+
+`doctor` ở ví dụ chỉ kiểm tra local. `doctor --check-live` gửi một request tổng hợp có thể tính phí; đây là bước riêng khi bạn muốn kiểm tra API. Không đặt key trong arguments, Git, config hoặc chat; không chạy build/tests/mã PR chưa tin cậy trong host có key.
+
+Live MCP cần thêm `--allow-live` vào `args` và `env_vars = ["TYPESAFE_API_KEY"]` vào table `mcp_servers.jev_review`; environment phải có key lúc khởi động Codex. Giữ giá trị key ngoài config. Xem [live setup](docs/codex-v1-quickstart.md#7-live-mode-do-team-chủ-động-bật) và [TypeSafe integration](docs/TypeSafe-SystemOne.md).
+
+<a id="troubleshooting"></a>
+
+## Khắc phục lỗi thường gặp
+
+| Hiện tượng | Cách xử lý |
+| --- | --- |
+| `pwsh`, `git` hoặc `dotnet` không tìm thấy | Cài công cụ ở phần Chuẩn bị; mở terminal mới và kiểm tra PATH |
+| CLI yêu cầu runtime .NET 10 | Kiểm tra `dotnet --list-runtimes`; cài `Microsoft.NETCore.App 10.0.x` đúng kiến trúc máy |
+| `git_repository_root_required` | Đặt `-ProjectPath` bằng Git root do `git rev-parse --show-toplevel` trả về |
+| `project_setup_already_exists` / `project_skill_already_exists` | Installer không overwrite; review bộ cài hiện tại theo installation manifest rồi cập nhật thủ công |
+| `package_hash_mismatch` / checksum sai | Lấy lại ZIP và checksum từ nguồn phân phối tin cậy; không sửa manifest để bỏ qua lỗi |
+| Path là symlink/junction hoặc tổ tiên có link | Dùng project/package ở đường dẫn vật lý; installer/MCP từ chối linked paths |
+| `rubric`/fixture không tìm thấy | Chạy từ Git root; truyền paths `.jev-review/` như ví dụ, kể cả khi gọi MCP trực tiếp |
+| Codex chưa thấy skill hoặc MCP | Kiểm tra đúng project, trust/config và tool PATH; mở lại phiên, xem `/skills`, `/mcp` hoặc `codex mcp list` |
+| Git fake trả nhiều `insufficient_context` | Đây là response cho ID không có fixture; tiếp tục xác minh source hoặc chủ động dùng live |
+| Run output đã có nội dung | Bỏ `--output` để dùng tên tự sinh, hoặc chọn thư mục mới/rỗng |
+| `release_directory_not_empty` khi build gói | Chọn `-OutputDirectory` mới; giữ gói cũ để truy lại version/checksum |
+
+Nếu cần báo lỗi, gửi version/commit, OS, command đã loại secrets, counts/error codes và reproduction tối thiểu bằng dữ liệu tổng hợp.
+
+<a id="maintenance"></a>
+
+## Dùng chung trong team, cập nhật và giới hạn
+
+Giữ cùng ZIP/checksum, version rubric và policy để team dùng cùng cấu hình. Cách đơn giản cho pilot v1: mỗi developer cài đầy đủ cùng gói vào checkout chưa có bốn skills hoặc `.jev-review`; team chọn ignore các files cài cục bộ theo chính sách repo. Nếu muốn commit các skills và bộ runtime/assets vào repo, người clone dùng bộ đã có và cấu hình MCP theo bước 3, không chạy lại installer. Nếu chỉ commit skills, cài runtime/assets thủ công theo [quickstart](docs/codex-v1-quickstart.md#2-cài-vào-git-root-của-project); installer v1 không có chế độ cài riêng runtime.
+
+Snippet MCP chứa absolute paths nên mỗi máy cần tạo lại; đặt file này và config có paths cục bộ vào ignore theo chính sách repo. CLI tạo review output dưới `runs/` của project đích; installer không tự thêm ignore rules.
+
+Installer v1 không overwrite. Update bằng cách review/merge files của gói mới dựa trên `.jev-review/installation.json`. Rollback bằng cách gỡ table MCP đã thêm và đúng files thuộc manifest; giữ review runs cần cho lịch sử. Hướng dẫn chi tiết: [update/rollback](docs/codex-v1-quickstart.md#8-đọc-kết-quả-cập-nhật-và-rollback).
+
+V1 đã kiểm tra offline pipeline và MCP stdio; kết nối UI Codex và chất lượng Jev live chưa được xác nhận trong lần bàn giao. MCP hiện phù hợp pilot theo phiên: giới hạn 4 jobs đang chạy nhưng terminal history chưa có giới hạn; hard kill chưa có checkpoint hoàn chỉnh. CLI process riêng phù hợp chạy nhiều lượt. Xem [release notes](docs/codex-v1-release-notes.md) và [bằng chứng kiểm tra](docs/v1-validation-2026-10-14.md).
+
+<a id="development"></a>
+
+## Build từ source và đóng góp
+
+Phần này dành cho maintainer/developer có checkout **source v1 chứa `scripts/New-CodexRelease.ps1`**. Cần .NET SDK **10.0.303 hoặc patch mới hơn trong feature band 10.0.3xx**, theo `global.json`; runtime là đủ cho người nhận ZIP.
+
+Từ Git root của source, tạo gói với output mới để chạy lại được:
+
+```powershell
+$jevReleaseOutput = Join-Path (Get-Location).Path ('runs/releases/local-' + [Guid]::NewGuid().ToString('N'))
+pwsh -NoProfile -File scripts/New-CodexRelease.ps1 -Version 1.0.0 -OutputDirectory $jevReleaseOutput
+```
+
+Script mặc định restore → build/test Release → smoke fake → publish runtime → tạo ZIP và checksum. Không cần TypeSafe key. Lấy hai files trong `$jevReleaseOutput`, rồi áp dụng quy trình cài ở trên vào project đích.
+
+Để phát triển từ source:
 
 ```powershell
 dotnet restore JevReview.slnx
 dotnet build JevReview.slnx --no-restore
 dotnet test JevReview.slnx --no-restore
-dotnet run --project src/JevReview.Cli --no-build -- doctor
 dotnet run --project src/JevReview.Cli --no-build -- classify --dataset datasets/smoke --mode fake
 ```
 
-Lệnh cuối in JSON summary nhỏ gồm output path/counts/models. Mở `report.md` tại đường dẫn đó. Smoke có **4 item, mỗi nhãn một case**; kết quả fake dự kiến: classified 4, failed 0, excluded 0, flagged 3. Không cần key.
+Default CI chạy offline. Live smoke/evaluation thực hiện riêng khi được phép. Đọc [CONTRIBUTING.md](CONTRIBUTING.md) trước khi sửa contracts hoặc phát hành.
 
-Wrapper PowerShell sau bước restore:
+## Tài liệu và nguồn tham khảo
 
-```powershell
-.\scripts\jev-review.ps1 doctor
-.\scripts\demo.ps1
-.\scripts\demo.ps1 -Dataset datasets/dev
-.\scripts\jev-review.ps1 classify --dataset datasets/dev --mode fake --policy configs/policy.json --output runs/dev-01
-.\scripts\jev-review.ps1 inspect --run runs/dev-01 --id dev-006
-```
+- [Quickstart chi tiết](docs/codex-v1-quickstart.md) — cũng được cài tại `.jev-review/docs/` trong project đích.
+- [CLI/lab reference](docs/cli-reference.md) — options, retry, resume, artifacts, Git/MCP và evaluator.
+- [Kiến trúc](docs/architecture.md) · [release notes](docs/codex-v1-release-notes.md) · [validation](docs/v1-validation-2026-10-14.md).
+- [Kế hoạch đánh giá A/B](docs/experiment-plan.md) — gold và baseline độc lập; fake fixtures không phải gold.
+- [README oh-my-pi](https://github.com/can1357/oh-my-pi/blob/main/README.md) và [magic keywords](https://github.com/can1357/oh-my-pi/blob/main/docs/magic-keywords.md) là nguồn tham khảo cách trình bày và workflow.
 
-`jev-review` là tên app; không cần cài global tool. Dùng wrapper hoặc `dotnet run --project src/JevReview.Cli --no-build -- <command>`. Lệnh dotnet trực tiếp dùng được trên Windows/Linux. Mỗi output directory phải mới hoặc rỗng.
-
-## Dữ liệu và fake
-
-`datasets/dev/items.json`: 20 case. `datasets/holdout/items.json`: 20 case khác nhóm thay đổi. Input chỉ có `id`, `task`, `path`, `diff`, `context`. Parser từ chối ID trùng và field gold như `expectedLabel`; thiếu task/path/diff được giữ dưới `excluded`.
-
-Fake đọc response định trước theo ID từ `fixtures/fake/dev-responses.json`, **không suy luận từ code**. Item lạ nhận `insufficient_context`. Vì vậy fake trên holdout/Git mới chuyển review toàn bộ; sửa nội dung case dev vẫn dùng response mock cùng ID. Không dùng mock làm gold hoặc bằng chứng chất lượng Jev.
-
-```powershell
-.\scripts\jev-review.ps1 classify --dataset datasets/smoke --mode fake --fake-responses fixtures/fake/failure-responses.json --output runs/failure-01
-```
-
-Demo lỗi: case đầu retry 429 hai lần rồi thành công, hai case khác thành `unjudged`, vẫn có trong flagged/errors/counts. Exit code 1 phản ánh các item chưa được phân loại.
-
-## Chạy Jev thật
-
-Đặt `TYPESAFE_API_KEY` trong môi trường local; không đưa key vào argument, Git, fixture hoặc chat. PowerShell nhập kín:
-
-```powershell
-$secureKey = Read-Host 'TypeSafe API key' -AsSecureString
-$env:TYPESAFE_API_KEY = [System.Net.NetworkCredential]::new('', $secureKey).Password
-.\scripts\jev-review.ps1 doctor
-.\scripts\jev-review.ps1 doctor --check-live
-.\scripts\jev-review.ps1 classify --dataset datasets/smoke --mode live --model jev-latest --output runs/live-smoke-01
-Remove-Item Env:TYPESAFE_API_KEY
-```
-
-`doctor` mặc định không gọi mạng, không in key. **`--check-live` gửi một request tổng hợp có thể tính phí**, không tải dataset. Live classify chỉ dùng dữ liệu được phép gửi tới dịch vụ.
-
-Client dùng `POST https://api.typesafe.ai/v1/systemone`, Bearer auth, `state` và một question `choice` mỗi item, với criteria từ rubric, theo [TypeSafe API reference](https://docs.typesafe.ai/api). Actual model từ response lưu riêng với requested model. HTTP 401/422 và response sai schema không retry; timeout/lỗi kết nối/408/429/5xx retry có giới hạn, exponential backoff và `Retry-After` (chờ tối đa 30 giây mỗi lần). Không echo payload/key/HTTP error body.
-
-## Rubric, policy và options
-
-Rubric: `rubrics/refactor-review.v1.json`. Đổi tiêu chí cần đổi phiên bản và tạo run mới.
-
-| Nhãn | Ý nghĩa |
-| --- | --- |
-| `refactor_only` | Giữ hành vi quan sát được |
-| `behavior_change` | Thay kết quả, điều kiện hoặc side effect |
-| `mixed` | Có refactor riêng và behavior change riêng |
-| `insufficient_context` | Thiếu bằng chứng cần thiết |
-
-Policy mặc định tương đương `configs/policy.json`: review nhãn rủi ro/thiếu context, `refactor_only` có xác suất **của chính nhãn đó** dưới 0.8, paths chứa authorization/authentication/transaction, và mẫu ổn định 10% từ nhóm còn lại bằng hash ID. `confidence` không thay thế probability.
-
-| Option classify | Mặc định / công dụng |
-| --- | --- |
-| `--dataset <path>` | Directory chứa `items.json`, hoặc file `.json`/`.jsonl` |
-| `--mode fake\|live` | fake |
-| `--rubric <file>` | rubrics/refactor-review.v1.json |
-| `--policy <file>` | Nếu bỏ qua dùng defaults |
-| `--model <name>` | fake-v1 hoặc jev-latest theo mode |
-| `--output <directory>` | Tự tạo dưới runs/ |
-| `--concurrency <1..32>` | 1; mỗi item một HTTP request |
-| `--timeout-seconds <1..600>` | 30 mỗi attempt |
-| `--max-retries <0..5>` | 2, tối đa 3 attempts |
-| `--max-input-bytes <number>` | 24000 byte UTF-8 của request JSON đầy đủ, gồm rubric |
-| `--fake-responses <file>` | fixtures/fake/dev-responses.json; chỉ đọc khi fake |
-| `--resume <run-directory>` | Dùng lại prediction thành công khi cache key khớp |
-
-Byte budget là giới hạn bảo thủ cục bộ, **không phải token counter** của Jev. Vượt giới hạn → `excluded/input_too_large` và flagged, không truncate hoặc chia mất context. Nếu tăng budget, tự đối chiếu giới hạn token dịch vụ. Ctrl+C ghi item chưa chạy thành `unjudged/cancelled` và xuất artifacts trước khi thoát.
-
-Exit codes: 0 thành công; 1 có unjudged/excluded; 2 cấu hình/input không hợp lệ; 130 cancellation. Exit 0 không chứng minh PR an toàn.
-
-## Artifacts và xác minh
-
-| File | Nội dung |
-| --- | --- |
-| manifest.json | ID, UTC timestamps, hashes, config không có key, actual models, nguồn/counts |
-| verdicts.jsonl | Một terminal verdict mỗi item; prediction riêng |
-| flagged.json | ID/path/status/reasons, gồm lỗi và excluded |
-| errors.jsonl | Item unjudged và mã lỗi |
-| report.md | Counts, predictions, verification và coverage |
-| verification.json | Chỉ có sau verify, lưu records của reviewer |
-
-Đối soát: `total = classified + failedOrUnjudged + excludedWithReason`. Flagged chồng lấp các trạng thái, không cộng vào total. Schema: `schemas/verdict.schema.json`. Raw input giữ ở dataset/repo gốc, không copy vào run.
-
-Sau khi đọc source/caller/test, ghi JSON array theo `evaluation/verification.example.json`. Confirmed/rejected cần evidence có path, dòng dương và mô tả; confirmed cần findingLabel. Unresolved nêu context thiếu. CLI chỉ kiểm tra cấu trúc, không tự chứng minh evidence đúng:
-
-```powershell
-.\scripts\jev-review.ps1 verify --run runs/dev-01 --file evaluation/verification.example.json
-```
-
-File ví dụ dùng bằng chứng fixture; paths C# đó không tồn tại trong repo lab. Verify thay thế toàn bộ records của run, cập nhật report và thống kê coverage; muốn bổ sung hãy gộp records trước. Model predictions luôn tách khỏi verified findings.
-
-## Resume
-
-```powershell
-.\scripts\jev-review.ps1 classify --dataset datasets/dev --mode fake --output runs/dev-02 --resume runs/dev-01
-```
-
-Chỉ reuse classified có input/rubric/config hash khớp. Config gồm model/mode, policy, timeout/retry/concurrency và hash fixture fake. Item lỗi chạy lại. Run mới ghi reused=true, attempts/latency bằng 0; không sao chép verification cũ.
-
-Live resume cần **pin version model**, từ chối alias jev-latest/jev-preview và đòi actual model cũ khớp model pin. Resume đọc run đã ghi đầy đủ, kể cả run hủy; chưa checkpoint khi process bị kill cứng trước khi ghi report.
-
-## Git range
-
-```powershell
-.\scripts\jev-review.ps1 classify --git 'D:\Projects\MyApp' --base main --head feature/refactor --merge-base --task 'Refactor validation without changing business behavior' --mode fake
-```
-
-Có `--merge-base`: diff merge-base(base, head) → head. Không có: diff trực tiếp hai commits. Manifest lưu baseSha/headSha/diffBaseSha, semantics và repo. Collector giữ filenames có khoảng trắng, lấy 3 dòng context, tắt external diff/textconv và rename detection; rename có thể thành delete/add. Binary/mode-only diff cần context và review thủ công.
-
-Chỉ đọc commits: staged/unstaged/untracked ngoài phạm vi và được ghi rõ trong manifest. Codex lấy implementation/caller khi xác minh. Không build/test PR không tin cậy trong môi trường giữ key.
-
-## Skill Codex
-
-Skill tại `.agents/skills/jev-triage/SKILL.md`. Mở Codex ở repo; nếu skill chưa xuất hiện hãy khởi động lại Codex. Sau build:
-
-```text
-$jev-triage Review datasets/dev in fake mode. Verify flagged changes and report evidence, rejected predictions and unresolved items.
-```
-
-Skill chốt rubric trước bulk input, đầu tiên chỉ đọc summary/flagged/errors, rồi lấy source các item được chọn và nhập verification. Không đọc gold khi inference; fake không chứng minh Jev đoán đúng. Discovery theo [tài liệu skills Codex](https://learn.chatgpt.com/docs/build-skills).
-
-## MCP stdio
-
-```powershell
-dotnet publish src/JevReview.Cli -c Release --no-restore -p:UseAppHost=false -o runs/publish
-dotnet runs/publish/jev-review.dll mcp --workspace 'D:\Projects\AGENT-1\codex-jev-review-lab'
-```
-
-MCP đọc/ghi JSON-RPC từng dòng qua stdio, protocol 2025-06-18, initialize/ping/tools/list/tools/call. Stdout chỉ có protocol messages. Ví dụ cấu hình client, sửa absolute paths cho máy bạn:
-
-```toml
-[mcp_servers.jev_review]
-command = "dotnet"
-args = ["D:/Projects/AGENT-1/codex-jev-review-lab/runs/publish/jev-review.dll", "mcp", "--workspace", "D:/Projects/AGENT-1/codex-jev-review-lab"]
-```
-
-Fake không cần key. Live MCP cần thêm `--allow-live` vào args và `env_vars = ["TYPESAFE_API_KEY"]` vào table cấu hình để forward key từ môi trường Codex, không đặt giá trị key trong args. Xem [cấu hình MCP chính thức](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
-
-| Tool | Input / output |
-| --- | --- |
-| start_review | dataset hoặc git+base/head/task, rubric/mode/policy/options → runId ngay |
-| get_review_status | runId → running/completed/failed/cancelled, counts khi đã có |
-| get_review_result | runId → manifest, flagged, errors, reportPath; không có raw diff |
-
-Tối đa 4 jobs đang chạy; concurrency mỗi job mặc định 1. Restart mất jobs đang chạy; run có manifest có thể đọc lại. Completed nghĩa đã xuất artifacts, vẫn cần kiểm tra counts. Paths giới hạn trong workspace, từ chối symlink/junction; không nhận shell tự do. Adapter dùng cùng service với CLI; test giao thức dựa trên [MCP specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools). Chưa kiểm thử kết nối UI Codex thực tế.
-
-## Evaluation A/B
-
-Đọc [experiment-plan.md](docs/experiment-plan.md) trước. Người đánh giá tự kiểm tra gold **ngoài workspace inference**. `evaluation/gold.example.json` chỉ mô tả format, không chứa đáp án dev/holdout. Không lấy fake fixture làm gold.
-
-Sau khi đóng băng output inference, chạy evaluator riêng:
-
-```powershell
-.\scripts\evaluate.ps1 -Run runs/live-holdout-01 -Gold 'D:\PrivateEvaluation\holdout-gold.json' -Output runs/eval-01
-.\scripts\evaluate.ps1 -Run runs/live-holdout-01 -Gold 'D:\PrivateEvaluation\holdout-gold.json' -Baseline 'D:\PrivateEvaluation\baseline-verdicts.jsonl' -Output runs/eval-ab-01
-```
-
-Gold record: id, expectedLabel, requiresReview, reason. RequiresReview xác định positive trước experiment. Baseline A dùng cùng verdict contract/input hash; không lấy B rồi đổi tên thành A. Thiếu prediction vẫn tính missing trong denominator. Thiếu baseline thì A là N/A.
-
-Output metrics.json/evaluation.md: recall/precision, escalation, coverage/error rate, confusion matrix gồm unjudged/excluded/missing, false negative IDs, p50/p95 latency item gồm retry/backoff. Mẫu số 0 là null/N/A. Token là N/A nếu đo không đầy đủ; chi phí, thời gian/token Codex chưa instrument cũng là N/A. Correctness của finding cuối cần đối chiếu verification riêng.
-
-## Trạng thái và giới hạn
-
-M1/M3 có offline demo/dev/policy; M2 có live adapter nhưng smoke thật chờ key; M4 có skill/verification contract, cần phiên Codex mới; M5 có 20 holdout/evaluator, chưa benchmark thật; M6 có Git/MCP, chưa test client UI thật. CI chạy offline trên Windows/Linux, không dùng secrets.
-
-Việc tiếp theo: durable checkpoint; metrics từng HTTP attempt/toàn pipeline; rate-limit tuning; môi trường agent review cô lập; working-tree collector nếu cần. Pilot 40 case không chứng minh chất lượng production. Lab không tự sửa/merge code.
+Bản này dùng cơ chế skills/MCP của Codex. Các skill không tự đổi reasoning effort, không cung cấp keyword interception, highlighting hoặc eval kernel của oh-my-pi. Gói v1 hiện phân phối nội bộ; public package/registry và quyết định license xem [CONTRIBUTING.md](CONTRIBUTING.md).
