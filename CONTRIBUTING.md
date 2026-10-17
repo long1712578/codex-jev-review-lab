@@ -19,11 +19,7 @@ Default checks offline, không cần API key. Hai tests Unix-only được skip 
 
 Mỗi PR tập trung một lỗi hoặc một deliverable. Mô tả input gây lỗi, hành vi trước/sau, file/contract bị ảnh hưởng, bằng chứng kiểm chứng và giới hạn còn lại. Với bugfix, thêm regression tái hiện lỗi thật trước fix; tránh tests chỉ lặp lại implementation. Với thay đổi API/artifact format, thảo luận design và compatibility trước.
 
-<<<<<<< HEAD
-Ưu tiên hiện tại: Git literal pathspec, MCP linked-root guard và handshake, typed core request, rồi local tool packaging. Đừng thêm nhiều provider, database hoặc dashboard khi không có consumer cụ thể.
-=======
 V1 đã có literal Git paths/UTF-8, MCP guard/handshake, typed Core và ZIP/installer. Ưu tiên tiếp theo: terminal-cache bounds, checkpoint/atomic artifacts, tổng collection budget và local tool packaging. Xem [architecture](docs/architecture.md) và [release notes](docs/codex-v1-release-notes.md). Chỉ thêm provider hoặc infrastructure khi có consumer cụ thể.
->>>>>>> codex/refactor-v1
 
 ## Các invariant bắt buộc
 

@@ -4,13 +4,7 @@ Bộ skill và công cụ review refactor dành cho các team đang dùng Codex.
 
 **V1.0.0 · Gói ZIP nội bộ · Skill theo project + CLI/MCP · .NET 10**
 
-<<<<<<< HEAD
-Review để chuẩn bị dùng trong cộng đồng (14/10/2026): [findings và kiểm chứng](docs/community-review-2026-10-14.md), [thiết kế/roadmap đề xuất](docs/superpowers/specs/2026-10-14-community-distribution-design.md), [setup trong project riêng](docs/installation.md), [lợi ích và so sánh](docs/comparison.md), [TypeSafe System One cho .NET — một file đầy đủ](docs/TypeSafe-SystemOne.md), [đóng góp](CONTRIBUTING.md). Kiến trúc mới và .NET tool package chưa triển khai; findings review còn cần sửa trước phát hành.
-
-## Cài đặt và demo
-=======
 [Lợi ích](#benefits) · [Cài đặt](#install) · [Sử dụng](#usage) · [Live mode](#live) · [Khắc phục lỗi](#troubleshooting) · [Build từ source](#development)
->>>>>>> codex/refactor-v1
 
 <a id="benefits"></a>
 

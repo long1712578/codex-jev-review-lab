@@ -1,10 +1,6 @@
 # Cài đặt và dùng Jev Review trong project của bạn
 
-<<<<<<< HEAD
-Hướng dẫn này dùng **code hiện có**, được kiểm tra ngày 14/10/2026 trên Windows với .NET SDK 10.0.303. Tool package, `init` và SDK core là [roadmap](superpowers/specs/2026-10-14-community-distribution-design.md), chưa phải tính năng đã phát hành. Lab cần .NET 10; project được review có thể dùng phiên bản .NET khác vì collection chỉ đọc Git commits.
-=======
 Hướng dẫn này mô tả cách build/publish DLL thủ công. V1 đã có Core và gói ZIP với installer/bốn skill; để cài vào project công ty, ưu tiên [quickstart v1](codex-v1-quickstart.md). `.NET tool`, `init` và public SDK package còn trong [roadmap](superpowers/specs/2026-10-14-community-distribution-design.md). Lab cần .NET 10; project được review có thể dùng phiên bản khác vì collection chỉ đọc Git commits.
->>>>>>> codex/refactor-v1
 
 ## 1. Build và kiểm tra offline
 
@@ -47,11 +43,7 @@ dotnet $jevDll classify --git $targetRepo --base main --head feature/refactor --
 
 Chỉ review commits; staged, unstaged, untracked không nằm trong range. Manifest ghi resolved SHAs và merge-base semantics. Mỗi output directory phải mới/rỗng. `--output` có thể chọn vị trí riêng; nếu không chọn, artifacts nằm dưới `runs` của CWD.
 
-<<<<<<< HEAD
-Fake với Git item mới trả `insufficient_context`; đó là cách kiểm tra wiring, không phải review chất lượng. Bản hiện tại có [lỗi bracket pathspec R1](community-review-2026-10-14.md); range có tên file chứa metacharacter cần đọc diff thủ công cho tới khi regression/fix hoàn tất.
-=======
 Fake với Git item mới trả `insufficient_context`; đó là cách kiểm tra wiring, không phải review chất lượng. [R1 trong review ban đầu](community-review-2026-10-14.md) đã được sửa bằng literal pathspec và regression cho bracket/Unicode/spaces.
->>>>>>> codex/refactor-v1
 
 ## 3. MCP cho project riêng
 
@@ -93,11 +85,7 @@ Request `start_review` phải chỉ rõ config project vì defaults hiện còn 
 }
 ```
 
-<<<<<<< HEAD
-`start_review` trả `runId`; gọi `get_review_status`, sau đó `get_review_result`. `completed` nghĩa artifacts đã được ghi, cần đọc counts/flagged/errors. `failed` hiện chưa có diagnostics chi tiết. Chọn workspace là thư mục thật: [R2](community-review-2026-10-14.md) chứng minh root junction chưa được chặn dù descendant links có guard.
-=======
 `start_review` trả `runId`; gọi `get_review_status`, sau đó `get_review_result`. `completed` nghĩa job hoàn tất ghi artifacts, cần đọc counts/flagged/errors. `failed` hiện chưa có diagnostics chi tiết. Workspace root/ancestors/segments có junction hoặc symlink hiện bị từ chối; [R2](community-review-2026-10-14.md) là bằng chứng lỗi trước fix.
->>>>>>> codex/refactor-v1
 
 Kiểm tra `codex mcp list` và `/mcp` trong TUI. Cấu hình này được đối chiếu docs; chưa chạy phiên UI Codex thực tế trong đợt review. Protocol offline đã có tests và probes.
 
@@ -105,11 +93,7 @@ Kiểm tra `codex mcp list` và `/mcp` trong TUI. Cấu hình này được đ�
 
 Trong lab, skill hiện có tại `.agents/skills/jev-triage/SKILL.md`, dùng `$jev-triage`. Codex khám phá `.agents/skills` theo repo; xem [Build skills](https://learn.chatgpt.com/docs/build-skills).
 
-<<<<<<< HEAD
-Skill hiện viết theo đường chạy từ root lab. **Chỉ copy SKILL.md sang project khác chưa đủ setup.** Dùng MCP đã cấu hình ở trên hoặc gọi DLL bằng absolute paths. Phiên bản skill phân phối không phụ thuộc lab nằm trong roadmap; không cần sửa user-global skill/config để thử bản hiện tại.
-=======
 Skill `jev-triage` giữ cách chạy từ root lab. **Chỉ copy SKILL.md sang project khác chưa đủ setup.** Gói v1 cung cấp `$jevify` dùng paths/runtime đã cài và MCP/CLI fallback; xem [quickstart](codex-v1-quickstart.md). Không cần sửa user-global skill/config.
->>>>>>> codex/refactor-v1
 
 Trong Codex đang mở project, có thể yêu cầu:
 
