@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace JevReview;
+
 public sealed record CollectedReview(ReviewItem[] Items, Dictionary<string, string> Source);
 public static class GitCollector
 {
@@ -28,9 +30,14 @@ public static class GitCollector
         }
         return new(items.ToArray(), new()
         {
-            ["kind"] = "git", ["repository"] = root, ["baseSha"] = baseSha, ["headSha"] = headSha,
-            ["diffBaseSha"] = diffBase, ["semantics"] = mergeBase ? "merge-base" : "endpoints",
-            ["workingTree"] = "excluded: staged, unstaged and untracked", ["task"] = task
+            ["kind"] = "git",
+            ["repository"] = root,
+            ["baseSha"] = baseSha,
+            ["headSha"] = headSha,
+            ["diffBaseSha"] = diffBase,
+            ["semantics"] = mergeBase ? "merge-base" : "endpoints",
+            ["workingTree"] = "excluded: staged, unstaged and untracked",
+            ["task"] = task
         });
     }
 
@@ -38,10 +45,16 @@ public static class GitCollector
     {
         var start = new ProcessStartInfo("git")
         {
-            WorkingDirectory = root, RedirectStandardOutput = true, RedirectStandardError = true,
-            UseShellExecute = false, CreateNoWindow = true
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
+            UseShellExecute = false,
+            CreateNoWindow = true
         };
         start.ArgumentList.Add("--no-pager");
+        start.ArgumentList.Add("--literal-pathspecs");
         foreach (var argument in arguments) start.ArgumentList.Add(argument);
         using var process = Process.Start(start) ?? throw new ArgumentException("git_unavailable");
         var stdout = process.StandardOutput.ReadToEndAsync(cancellationToken);

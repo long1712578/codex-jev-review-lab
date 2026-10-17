@@ -1,4 +1,5 @@
 namespace JevReview;
+
 public static class DatasetCollector
 {
     public static ReviewItem[] Load(string path)

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using JevReview;
 using Xunit;
 
 namespace JevReview.Tests;

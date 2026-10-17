@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/JevReview.Core/JevReview.Core.csproj" />
     <Project Path="src/JevReview.Cli/JevReview.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">

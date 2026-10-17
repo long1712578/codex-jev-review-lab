@@ -3,4 +3,7 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>jev-review</AssemblyName>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../JevReview.Core/JevReview.Core.csproj" />
+  </ItemGroup>
 </Project>

@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json;
-using JevReview;
 using Xunit;
 
 namespace JevReview.Tests;
@@ -71,7 +70,7 @@ public sealed class GitAndMcpTests
         await JsonFiles.WriteAsync(System.IO.Path.Combine(temp.Path, "rubrics/refactor-review.v1.json"), CoreTests.Rubric);
         await JsonFiles.WriteAsync(System.IO.Path.Combine(temp.Path, "items.json"), new[] { CoreTests.Item(diff: "private-diff") });
         var server = new McpServer(temp.Path);
-        await server.HandleAsync("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\"}}", default);
+        await ReleaseCorrectnessTests.Initialize(server);
         var start = await Call(server, "start_review", new { dataset = "items.json", mode = "fake" });
         var runId = start.GetProperty("runId").GetString()!;
         JsonElement status = default;
@@ -103,7 +102,7 @@ public sealed class GitAndMcpTests
     {
         using var temp = new TempDirectory();
         var server = new McpServer(temp.Path);
-        await server.HandleAsync("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\"}", default);
+        await ReleaseCorrectnessTests.Initialize(server);
         var started = await Call(server, "start_review", new { dataset = "missing.json" });
         var runId = started.GetProperty("runId").GetString()!;
         for (var i = 0; i < 100; i++)
@@ -130,7 +129,7 @@ public sealed class GitAndMcpTests
     {
         using var temp = new TempDirectory();
         var server = new McpServer(temp.Path);
-        await server.HandleAsync("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\"}", default);
+        await ReleaseCorrectnessTests.Initialize(server);
         var result = await RawCall(server, "start_review", new { dataset = "items.json", concurrency });
         Assert.True(result.GetProperty("result").GetProperty("isError").GetBoolean());
         var ping = await server.HandleAsync("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}", default);
@@ -151,7 +150,7 @@ public sealed class GitAndMcpTests
         try
         {
             var server = new McpServer(temp.Path);
-            await server.HandleAsync("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\"}", default);
+            await ReleaseCorrectnessTests.Initialize(server);
             var result = await RawCall(server, "start_review", new { dataset = "data" });
             Assert.True(result.GetProperty("result").GetProperty("isError").GetBoolean());
         }
@@ -168,7 +167,7 @@ public sealed class GitAndMcpTests
         Directory.CreateDirectory(sibling);
         await JsonFiles.WriteAsync(System.IO.Path.Combine(sibling, "items.json"), new[] { CoreTests.Item() });
         var server = new McpServer(root);
-        await server.HandleAsync("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\"}", default);
+        await ReleaseCorrectnessTests.Initialize(server);
         var result = await RawCall(server, "start_review", new { dataset = "../repo/items.json" });
         Assert.True(result.GetProperty("result").GetProperty("isError").GetBoolean());
     }

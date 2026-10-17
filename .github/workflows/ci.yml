@@ -12,10 +12,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
       - run: dotnet restore JevReview.slnx
       - run: dotnet build JevReview.slnx -c Release --no-restore
+      - run: dotnet format whitespace JevReview.slnx --no-restore --verify-no-changes
+      - run: dotnet format analyzers JevReview.slnx --no-restore --verify-no-changes --severity info --diagnostics IDE0005 IDE0051 IDE0052 IDE0060
       - run: dotnet test JevReview.slnx -c Release --no-build --no-restore
       - run: dotnet run --project src/JevReview.Cli -c Release --no-build -- classify --dataset datasets/smoke --mode fake --output runs/ci-smoke
+      - name: Build local distribution
+        shell: pwsh
+        run: ./scripts/New-CodexRelease.ps1 -SkipChecks
+      - uses: actions/upload-artifact@v7
+        with:
+          name: codex-jev-v1-${{ matrix.os }}
+          path: |
+            runs/releases/1.0.0/*.zip
+            runs/releases/1.0.0/*.sha256
+          if-no-files-found: error
